@@ -29,20 +29,21 @@ class HomeScreen extends StatelessWidget {
             Text(
               "Welcome back!",
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF4A00E0),
-                  ),
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF4A00E0),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               "Organize your notes, PDFs, and AI summaries all in one place.",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[700],
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
             ),
             const SizedBox(height: 24),
 
             // Action Buttons with gradient style
+            // Inside the Row with _ActionCard
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -52,7 +53,9 @@ class HomeScreen extends StatelessWidget {
                   gradient: const LinearGradient(
                     colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
                   ),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushNamed(context, '/upload');
+                  },
                 ),
                 _ActionCard(
                   icon: Icons.notes,
@@ -60,7 +63,9 @@ class HomeScreen extends StatelessWidget {
                   gradient: const LinearGradient(
                     colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
                   ),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushNamed(context, '/notes');
+                  },
                 ),
                 _ActionCard(
                   icon: Icons.settings,
@@ -68,7 +73,9 @@ class HomeScreen extends StatelessWidget {
                   gradient: const LinearGradient(
                     colors: [Color(0xFFFC5C7D), Color(0xFF6A82FB)],
                   ),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pushNamed(context, '/settings');
+                  },
                 ),
               ],
             ),
@@ -76,9 +83,9 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 32),
             Text(
               "Recent Summaries",
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
@@ -93,7 +100,10 @@ class HomeScreen extends StatelessWidget {
                   ),
                   elevation: 3,
                   child: ListTile(
-                    leading: const Icon(Icons.description, color: Color(0xFF4A00E0)),
+                    leading: const Icon(
+                      Icons.description,
+                      color: Color(0xFF4A00E0),
+                    ),
                     title: Text(
                       "PDF Summary ${index + 1}",
                       style: const TextStyle(fontWeight: FontWeight.bold),
@@ -151,9 +161,12 @@ class _ActionCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
-            )
+            ),
           ],
         ),
       ),
