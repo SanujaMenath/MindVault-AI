@@ -1,11 +1,14 @@
 buildscript {
+    ext.kotlin_version = "1.9.24" // 👈 important for Flutter plugins
+
     repositories {
         google()
         mavenCentral()
     }
+
     dependencies {
-        // Use latest stable Kotlin
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24")
+        classpath "com.android.tools.build:gradle:8.3.2"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
@@ -16,7 +19,7 @@ allprojects {
     }
 }
 
-// Redirect build folder to a shared one (saves space)
+// (Optional) Shared build folder setup
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")
