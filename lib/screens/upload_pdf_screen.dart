@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 class UploadPdfScreen extends StatefulWidget {
   const UploadPdfScreen({super.key});
@@ -10,6 +12,7 @@ class UploadPdfScreen extends StatefulWidget {
 
 class _UploadPdfScreenState extends State<UploadPdfScreen> {
   String? fileName;
+  String? extractedText;
 
   Future<void> pickPdf() async {
     final result = await FilePicker.platform.pickFiles(
@@ -18,13 +21,35 @@ class _UploadPdfScreenState extends State<UploadPdfScreen> {
     );
 
     if (result != null && result.files.isNotEmpty) {
+      final path = result.files.single.path;
+      if (path == null) return;
+
       setState(() {
         fileName = result.files.single.name;
+        extractedText = null; // reset before extracting
       });
 
-      // If you need the file path:
-      String? path = result.files.single.path;
-      debugPrint("Picked file: $path");
+      try {
+        final file = File(path);
+        final bytes = await file.readAsBytes();
+
+        // Load PDF and extract text
+        final document = PdfDocument(inputBytes: bytes);
+        final extractor = PdfTextExtractor(document);
+        final text = extractor.extractText();
+        document.dispose();
+
+        setState(() {
+          extractedText = text;
+        });
+
+        debugPrint("Extracted text: $text");
+      } catch (e) {
+        debugPrint("Error extracting PDF text: $e");
+        setState(() {
+          extractedText = "Failed to extract text.";
+        });
+      }
     }
   }
 
@@ -32,9 +57,9 @@ class _UploadPdfScreenState extends State<UploadPdfScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Upload PDF")),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton.icon(
               onPressed: pickPdf,
@@ -43,6 +68,15 @@ class _UploadPdfScreenState extends State<UploadPdfScreen> {
             ),
             const SizedBox(height: 20),
             if (fileName != null) Text("Selected: $fileName"),
+            const SizedBox(height: 20),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Text(
+                  extractedText ?? "No text extracted yet.",
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ),
           ],
         ),
       ),

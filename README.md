@@ -1,16 +1,64 @@
-# mindvault_ai
+# 🧠 MindVault AI  
+### Personal AI-Powered Digital Organizer  
 
-Personal AI organizer
+**MindVault AI** is a smart, secure, and all-in-one productivity app built with **Flutter**.  
+It combines task scheduling, note management, AI-powered summarization, and a secure password vault — all protected with biometrics and cloud backup support.  
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## ✨ Features  
 
-A few resources to get you started if this is your first Flutter project:
+- 📅 **Smart Task Scheduler** – Plan your day with a calendar and set reminders.  
+- 📝 **AI Notes** – Write, organize, and let AI summarize long notes into quick points.  
+- 🔐 **Vault for Secrets** – Store passwords, confidential notes, and sensitive data safely.  
+- 👆 **Biometric Security** – Fingerprint/Face unlock for maximum protection.  
+- ☁️ **Cloud Backup & Restore** – Sync with Google Drive / OneDrive.  
+- 🔍 **Fast Search & Filters** – Find tasks or notes instantly.  
+- 📶 **Offline Mode** – Access tasks and notes without internet.  
+- 🔔 **Reminders & Notifications** – Never miss a deadline again.  
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛠️ Tech Stack  
+
+- **Frontend:** Flutter (Dart)  
+- **Backend:** Spring Boot (Java)  
+- **Database:** MySQL + SQLite (offline storage)  
+- **AI Integration:** OpenAI API (for summarization)  
+- **Cloud Storage:** Google Drive / OneDrive APIs  
+- **Security:** AES Encryption + Biometrics (Android/iOS SDKs)  
+
+---
+
+## 🚀 Getting Started  
+
+### 1️⃣ Prerequisites  
+- [Flutter SDK](https://docs.flutter.dev/get-started/install)  
+- Android Studio / VS Code with Flutter plugin  
+- A backend server (Spring Boot + MySQL)  
+- OpenAI API Key (if using AI features)  
+
+### 2️⃣ Installation  
+
+Clone the repository:  
+```bash
+git clone https://github.com/sanujamenath/mindvault_ai.git
+cd mindvault_ai
+```  
+Install dependencies: 
+```bash
+flutter pub get
+```  
+Run the app:
+```bash
+flutter run
+``` 
+---
+
+🔒 Security
+
+- Biometric authentication (fingerprint/face)
+
+- AES-256 data encryption for vault storage
+
+- Secure API communication with HTTPS

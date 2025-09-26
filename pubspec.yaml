@@ -23,7 +23,13 @@ dependencies:
   file_picker: ^8.0.0
   table_calendar: ^3.2.0
   flutter_dotenv: ^6.0.0
+  syncfusion_flutter_pdf: ^28.1.33
+  http: ^1.2.2
+  sqflite: ^2.3.2
+  path_provider: ^2.1.4
   cupertino_icons: ^1.0.8
+
+
 
 
 dev_dependencies:
