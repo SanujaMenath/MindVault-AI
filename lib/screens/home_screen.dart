@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../db/summary_db.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -89,30 +90,61 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Sample Cards (replace with dynamic list later)
+            // Summarized History Cards
             Expanded(
-              child: ListView.builder(
-                itemCount: 3,
-                itemBuilder: (context, index) => Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 3,
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.description,
-                      color: Color(0xFF4A00E0),
-                    ),
-                    title: Text(
-                      "PDF Summary ${index + 1}",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: const Text("AI-generated summary preview..."),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {},
-                  ),
-                ),
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: SummaryDb.instance.getSummaries(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final summaries = snapshot.data!;
+                  if (summaries.isEmpty) {
+                    return const Center(child: Text("No summaries yet"));
+                  }
+                  return ListView.builder(
+                    itemCount: summaries.length,
+                    itemBuilder: (context, index) {
+                      final item = summaries[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 3,
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.description,
+                            color: Color(0xFF4A00E0),
+                          ),
+                          title: Text(item["fileName"]),
+                          subtitle: Text(
+                            item["summary"],
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: Text(item["fileName"]),
+                                content: SingleChildScrollView(
+                                  child: Text(item["summary"]),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("Close"),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],

@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
+import '../services/huggingface_service.dart';
+import '../db/summary_db.dart';
 
 class UploadPdfScreen extends StatefulWidget {
   const UploadPdfScreen({super.key});
@@ -13,6 +15,8 @@ class UploadPdfScreen extends StatefulWidget {
 class _UploadPdfScreenState extends State<UploadPdfScreen> {
   String? fileName;
   String? extractedText;
+  String? summary;
+  bool isLoading = false;
 
   Future<void> pickPdf() async {
     final result = await FilePicker.platform.pickFiles(
@@ -26,14 +30,14 @@ class _UploadPdfScreenState extends State<UploadPdfScreen> {
 
       setState(() {
         fileName = result.files.single.name;
-        extractedText = null; // reset before extracting
+        extractedText = null;
+        summary = null;
       });
 
       try {
         final file = File(path);
         final bytes = await file.readAsBytes();
 
-        // Load PDF and extract text
         final document = PdfDocument(inputBytes: bytes);
         final extractor = PdfTextExtractor(document);
         final text = extractor.extractText();
@@ -42,14 +46,30 @@ class _UploadPdfScreenState extends State<UploadPdfScreen> {
         setState(() {
           extractedText = text;
         });
-
-        debugPrint("Extracted text: $text");
       } catch (e) {
         debugPrint("Error extracting PDF text: $e");
-        setState(() {
-          extractedText = "Failed to extract text.";
-        });
       }
+    }
+  }
+
+  Future<void> summarize() async {
+    if (extractedText == null || fileName == null) return;
+
+    setState(() => isLoading = true);
+
+    try {
+      final result = await HuggingFaceService.summarizeText(extractedText!);
+      setState(() {
+        summary = result;
+      });
+
+      // Save to DB
+      await SummaryDb.instance.insertSummary(fileName!, result);
+    } catch (e) {
+      debugPrint("Summarization failed: $e");
+      setState(() => summary = "Failed to summarize text.");
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
@@ -69,14 +89,23 @@ class _UploadPdfScreenState extends State<UploadPdfScreen> {
             const SizedBox(height: 20),
             if (fileName != null) Text("Selected: $fileName"),
             const SizedBox(height: 20),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Text(
-                  extractedText ?? "No text extracted yet.",
-                  style: const TextStyle(fontSize: 14),
-                ),
+
+            if (extractedText != null)
+              ElevatedButton.icon(
+                onPressed: summarize,
+                icon: const Icon(Icons.summarize),
+                label: const Text("Summarize"),
               ),
-            ),
+
+            const SizedBox(height: 20),
+            if (isLoading) const CircularProgressIndicator(),
+            if (summary != null) ...[
+              const SizedBox(height: 20),
+              Text(
+                summary!,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
           ],
         ),
       ),
