@@ -1,13 +1,56 @@
 import 'package:flutter/material.dart';
 import '../db/summary_db.dart';
+import '../main.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
+  late Future<List<Map<String, dynamic>>> summariesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSummaries();
+  }
+
+  void _loadSummaries() {
+    summariesFuture = SummaryDb.instance.getSummaries();
+    setState(() {});
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _loadSummaries();
+  }
+
+  Future<void> _deleteSummary(int id) async {
+    await SummaryDb.instance.deleteSummary(id);
+    setState(() {
+      _loadSummaries(); 
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA), // soft background
+      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: const Text(
           "MindVault AI",
@@ -26,25 +69,24 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Section
             Text(
               "Welcome back!",
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF4A00E0),
-              ),
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF4A00E0),
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               "Organize your notes, PDFs, and AI summaries all in one place.",
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.grey[700]),
             ),
             const SizedBox(height: 24),
 
-            // Action Buttons with gradient style
-            // Inside the Row with _ActionCard
+            // Action buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -54,9 +96,7 @@ class HomeScreen extends StatelessWidget {
                   gradient: const LinearGradient(
                     colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
                   ),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/upload');
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/upload'),
                 ),
                 _ActionCard(
                   icon: Icons.notes,
@@ -64,9 +104,7 @@ class HomeScreen extends StatelessWidget {
                   gradient: const LinearGradient(
                     colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
                   ),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/notes');
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/notes'),
                 ),
                 _ActionCard(
                   icon: Icons.settings,
@@ -74,9 +112,7 @@ class HomeScreen extends StatelessWidget {
                   gradient: const LinearGradient(
                     colors: [Color(0xFFFC5C7D), Color(0xFF6A82FB)],
                   ),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/settings');
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/settings'),
                 ),
               ],
             ),
@@ -84,16 +120,17 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 32),
             Text(
               "Recent Summaries",
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
-            // Summarized History Cards
+            // Summary List
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: SummaryDb.instance.getSummaries(),
+                future: summariesFuture,
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
@@ -140,6 +177,35 @@ class HomeScreen extends StatelessWidget {
                               ),
                             );
                           },
+                          onLongPress: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text("Delete Summary"),
+                                content: const Text(
+                                    "Are you sure you want to delete this summary?"),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text(
+                                      "Delete",
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              _deleteSummary(item["id"]);
+                            }
+                          },
                         ),
                       );
                     },
@@ -154,7 +220,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// Action Card with gradient
+// Action Card widget
 class _ActionCard extends StatelessWidget {
   final IconData icon;
   final String label;
