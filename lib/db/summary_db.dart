@@ -46,4 +46,9 @@ class SummaryDb {
     final db = await instance.database;
     return await db.query("summaries", orderBy: "createdAt DESC");
   }
+
+  Future<int> deleteSummary(int id) async {
+    final db = await instance.database;
+    return await db.delete("summaries", where: "id = ?", whereArgs: [id]);
+  }
 }

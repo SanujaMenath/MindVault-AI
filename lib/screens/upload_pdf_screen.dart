@@ -18,6 +18,15 @@ class _UploadPdfScreenState extends State<UploadPdfScreen> {
   String? summary;
   bool isLoading = false;
 
+  List<String> chunkText(String text, {int chunkSize = 1000}) {
+    final List<String> chunks = [];
+    for (var i = 0; i < text.length; i += chunkSize) {
+      final end = (i + chunkSize < text.length) ? i + chunkSize : text.length;
+      chunks.add(text.substring(i, end));
+    }
+    return chunks;
+  }
+
   Future<void> pickPdf() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -58,13 +67,29 @@ class _UploadPdfScreenState extends State<UploadPdfScreen> {
     setState(() => isLoading = true);
 
     try {
-      final result = await HuggingFaceService.summarizeText(extractedText!);
+      final chunks = chunkText(extractedText!, chunkSize: 1000);
+      final List<String> summaries = [];
+
+      for (final chunk in chunks) {
+        final result = await HuggingFaceService.summarizeText(chunk);
+        summaries.add(result);
+      }
+
+      // Combine chunk summaries
+      final combinedSummary = summaries.join(" ");
+
+  
+      String finalSummary = combinedSummary;
+      if (combinedSummary.length > 1000) {
+        finalSummary = await HuggingFaceService.summarizeText(combinedSummary);
+      }
+
       setState(() {
-        summary = result;
+        summary = finalSummary;
       });
 
       // Save to DB
-      await SummaryDb.instance.insertSummary(fileName!, result);
+      await SummaryDb.instance.insertSummary(fileName!, finalSummary);
     } catch (e) {
       debugPrint("Summarization failed: $e");
       setState(() => summary = "Failed to summarize text.");
@@ -101,10 +126,7 @@ class _UploadPdfScreenState extends State<UploadPdfScreen> {
             if (isLoading) const CircularProgressIndicator(),
             if (summary != null) ...[
               const SizedBox(height: 20),
-              Text(
-                summary!,
-                style: const TextStyle(fontSize: 16),
-              ),
+              Text(summary!, style: const TextStyle(fontSize: 16)),
             ],
           ],
         ),

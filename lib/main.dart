@@ -6,12 +6,12 @@ import 'screens/upload_pdf_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/settings_screen.dart';
 
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env"); 
   runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -26,6 +26,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.deepPurple,
       ),
       home: const SplashScreen(),
+      navigatorObservers: [routeObserver],
       routes: {
         '/home': (context) => const HomeScreen(),
         '/upload': (context) => const UploadPdfScreen(),
