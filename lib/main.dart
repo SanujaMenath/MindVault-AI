@@ -4,6 +4,7 @@ import 'splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/upload_pdf_screen.dart';
 import 'screens/notes_screen.dart';
+import 'screens/tasks_screen.dart';
 import 'screens/settings_screen.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/upload': (context) => const UploadPdfScreen(),
         '/notes': (context) => const NotesScreen(),
+        '/tasks': (context) => const TasksScreen(),
         '/settings': (context) => const SettingsScreen(),
       },
     );
