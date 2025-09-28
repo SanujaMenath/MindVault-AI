@@ -43,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Future<void> _deleteSummary(int id) async {
     await SummaryDb.instance.deleteSummary(id);
     setState(() {
-      _loadSummaries(); 
+      _loadSummaries();
     });
   }
 
@@ -63,7 +63,30 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         centerTitle: true,
         elevation: 0,
         backgroundColor: const Color(0xFF4A00E0),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(
+              Icons.more_vert,
+              color: Colors.white,
+            ), // white 3 dots
+            onSelected: (value) {
+              if (value == 'settings') {
+                Navigator.pushNamed(context, '/settings');
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem(
+                value: 'settings',
+                child: SizedBox(
+                  width: 150, // make menu item wider
+                  child: Text("Settings"),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -72,17 +95,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             Text(
               "Welcome back!",
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF4A00E0),
-                  ),
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF4A00E0),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               "Organize your notes, PDFs, and AI summaries all in one place.",
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Colors.grey[700]),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
             ),
             const SizedBox(height: 24),
 
@@ -94,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   icon: Icons.upload_file,
                   label: "Upload PDF",
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+                    colors: [Color.fromARGB(255, 152, 45, 245), Color(0xFF4A00E0)],
                   ),
                   onTap: () => Navigator.pushNamed(context, '/upload'),
                 ),
@@ -102,17 +124,21 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   icon: Icons.notes,
                   label: "My Notes",
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                    colors: [Color.fromARGB(255, 197, 2, 227), Color.fromARGB(255, 101, 14, 101)],
                   ),
                   onTap: () => Navigator.pushNamed(context, '/notes'),
                 ),
                 _ActionCard(
-                  icon: Icons.settings,
-                  label: "Settings",
+                  icon: Icons.task, // task icon
+                  label: "Tasks",
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFFC5C7D), Color(0xFF6A82FB)],
+                    colors: [
+                      Color.fromARGB(255, 47, 168, 193),
+                      Color.fromARGB(255, 27, 81, 126),
+                    ], // nice orange → dark
                   ),
-                  onTap: () => Navigator.pushNamed(context, '/settings'),
+                  onTap: () =>
+                      Navigator.pushNamed(context, '/tasks'), 
                 ),
               ],
             ),
@@ -120,10 +146,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             const SizedBox(height: 32),
             Text(
               "Recent Summaries",
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
@@ -183,7 +208,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                               builder: (_) => AlertDialog(
                                 title: const Text("Delete Summary"),
                                 content: const Text(
-                                    "Are you sure you want to delete this summary?"),
+                                  "Are you sure you want to delete this summary?",
+                                ),
                                 actions: [
                                   TextButton(
                                     onPressed: () =>
