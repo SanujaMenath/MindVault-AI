@@ -65,22 +65,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         backgroundColor: const Color(0xFF4A00E0),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(
-              Icons.more_vert,
-              color: Colors.white,
-            ), // white 3 dots
+            icon: const Icon(Icons.more_vert, color: Colors.white),
             onSelected: (value) {
               if (value == 'settings') {
                 Navigator.pushNamed(context, '/settings');
+              } else if (value == 'profile') {
+                Navigator.pushNamed(context, '/profile');
               }
             },
             itemBuilder: (BuildContext context) => [
               const PopupMenuItem(
+                value: 'profile',
+                child: SizedBox(width: 150, child: Text("Profile")),
+              ),
+              const PopupMenuItem(
                 value: 'settings',
-                child: SizedBox(
-                  width: 150, // make menu item wider
-                  child: Text("Settings"),
-                ),
+                child: SizedBox(width: 150, child: Text("Settings")),
               ),
             ],
           ),
@@ -116,7 +116,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   icon: Icons.upload_file,
                   label: "Upload PDF",
                   gradient: const LinearGradient(
-                    colors: [Color.fromARGB(255, 152, 45, 245), Color(0xFF4A00E0)],
+                    colors: [
+                      Color.fromARGB(255, 152, 45, 245),
+                      Color(0xFF4A00E0),
+                    ],
                   ),
                   onTap: () => Navigator.pushNamed(context, '/upload'),
                 ),
@@ -124,7 +127,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   icon: Icons.notes,
                   label: "My Notes",
                   gradient: const LinearGradient(
-                    colors: [Color.fromARGB(255, 197, 2, 227), Color.fromARGB(255, 101, 14, 101)],
+                    colors: [
+                      Color.fromARGB(255, 197, 2, 227),
+                      Color.fromARGB(255, 101, 14, 101),
+                    ],
                   ),
                   onTap: () => Navigator.pushNamed(context, '/notes'),
                 ),
@@ -137,8 +143,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       Color.fromARGB(255, 27, 81, 126),
                     ], // nice orange → dark
                   ),
-                  onTap: () =>
-                      Navigator.pushNamed(context, '/tasks'), 
+                  onTap: () => Navigator.pushNamed(context, '/tasks'),
                 ),
               ],
             ),
