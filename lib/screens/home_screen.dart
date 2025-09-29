@@ -62,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: const Color(0xFF4A00E0),
+        backgroundColor: const Color.fromARGB(255, 127, 11, 153),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.white),
