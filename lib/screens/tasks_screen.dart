@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/task_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -10,21 +10,43 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  final taskService = TaskService();
   final TextEditingController _controller = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  void _addTask() {
-    if (_controller.text.trim().isEmpty) return;
-    taskService.addTask(_controller.text.trim());
+  User? get currentUser => _auth.currentUser;
+
+  Future<void> _addTask() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || currentUser == null) return;
+
+    await _firestore
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('tasks')
+        .add({'title': text, 'timestamp': FieldValue.serverTimestamp()});
+
     _controller.clear();
   }
 
-  void _deleteTask(String taskId) {
-    FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
+  Future<void> _deleteTask(String taskId) async {
+    if (currentUser == null) return;
+    await _firestore
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('tasks')
+        .doc(taskId)
+        .delete();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (currentUser == null) {
+      return const Scaffold(
+        body: Center(child: Text('Please sign in to view your tasks')),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
@@ -43,7 +65,6 @@ class _TasksScreenState extends State<TasksScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Add Task Input
             Row(
               children: [
                 Expanded(
@@ -78,29 +99,29 @@ class _TasksScreenState extends State<TasksScreen> {
               ],
             ),
             const SizedBox(height: 16),
-
-            // Task List
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: taskService.getUserTasks(),
+                stream: _firestore
+                    .collection('users')
+                    .doc(currentUser!.uid)
+                    .collection('tasks')
+                    .orderBy('timestamp', descending: true)
+                    .snapshots(),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(child: Text("No tasks yet"));
                   }
 
                   final docs = snapshot.data!.docs;
 
+                  if (docs.isEmpty) {
+                    return const Center(child: Text("No tasks yet"));
+                  }
+
                   return ListView.builder(
                     itemCount: docs.length,
                     itemBuilder: (context, index) {
-                      final doc = docs[index];
-                      final taskId = doc.id;
-                      final taskTitle = doc['title'];
-
+                      final task = docs[index];
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
@@ -111,10 +132,10 @@ class _TasksScreenState extends State<TasksScreen> {
                             Icons.check_circle_outline,
                             color: Color(0xFF4A00E0),
                           ),
-                          title: Text(taskTitle),
+                          title: Text(task['title']),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteTask(taskId),
+                            onPressed: () => _deleteTask(task.id),
                           ),
                         ),
                       );

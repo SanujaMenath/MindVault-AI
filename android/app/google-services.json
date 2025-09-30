@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "70857722263",
+    "project_id": "mindvault-ai-sanuja",
+    "storage_bucket": "mindvault-ai-sanuja.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:70857722263:android:412536352ce896884adcd2",
+        "android_client_info": {
+          "package_name": "com.example.mindvault_ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOQktIUyk6l7ZvTnCGaLrJlBoeDUMQTE0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
