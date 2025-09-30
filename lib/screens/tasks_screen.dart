@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/task_service.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -8,21 +10,17 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  final List<String> _tasks = [];
+  final taskService = TaskService();
   final TextEditingController _controller = TextEditingController();
 
   void _addTask() {
     if (_controller.text.trim().isEmpty) return;
-    setState(() {
-      _tasks.add(_controller.text.trim());
-      _controller.clear();
-    });
+    taskService.addTask(_controller.text.trim());
+    _controller.clear();
   }
 
-  void _deleteTask(int index) {
-    setState(() {
-      _tasks.removeAt(index);
-    });
+  void _deleteTask(String taskId) {
+    FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
   }
 
   @override
@@ -83,30 +81,47 @@ class _TasksScreenState extends State<TasksScreen> {
 
             // Task List
             Expanded(
-              child: _tasks.isEmpty
-                  ? const Center(child: Text("No tasks yet"))
-                  : ListView.builder(
-                      itemCount: _tasks.length,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: taskService.getUserTasks(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(child: Text("No tasks yet"));
+                  }
+
+                  final docs = snapshot.data!.docs;
+
+                  return ListView.builder(
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final doc = docs[index];
+                      final taskId = doc.id;
+                      final taskTitle = doc['title'];
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.check_circle_outline,
+                            color: Color(0xFF4A00E0),
                           ),
-                          child: ListTile(
-                            leading: const Icon(
-                              Icons.check_circle_outline,
-                              color: Color(0xFF4A00E0),
-                            ),
-                            title: Text(_tasks[index]),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteTask(index),
-                            ),
+                          title: Text(taskTitle),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _deleteTask(taskId),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; 
 import 'splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/upload_pdf_screen.dart';
@@ -9,9 +11,13 @@ import 'screens/settings_screen.dart';
 import 'screens/profile_screen.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -24,7 +30,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'MindVault AI',
       theme: ThemeData(
-        useMaterial3: true, // modern Material 3 UI
+        useMaterial3: true,
         primarySwatch: Colors.deepPurple,
       ),
       home: const SplashScreen(),
