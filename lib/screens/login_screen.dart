@@ -22,11 +22,12 @@ class _LoginScreenState extends State<LoginScreen> {
         child: user == null
             ? ElevatedButton(
                 onPressed: () async {
-                  await authService.signInWithGoogle();
-                  if (mounted) {
+                  final user = await authService.signInWithGoogle();
+                  if (user != null && mounted) {
                     Navigator.pushReplacementNamed(context, '/home');
                   }
                 },
+
                 child: const Text("Sign in with Google"),
               )
             : ElevatedButton(
