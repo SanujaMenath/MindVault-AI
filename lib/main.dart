@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; 
 import 'splash_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/upload_pdf_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/tasks_screen.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
       navigatorObservers: [routeObserver],
       routes: {
         '/home': (context) => const HomeScreen(),
+         '/login': (context) => const LoginScreen(),
         '/upload': (context) => const UploadPdfScreen(),
         '/notes': (context) => const NotesScreen(),
         '/tasks': (context) => const TasksScreen(),
