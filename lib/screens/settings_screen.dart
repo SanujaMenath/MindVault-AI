@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -8,7 +9,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool isDarkMode = false;
   double fontSize = 16;
   bool notificationsEnabled = true;
 
@@ -22,13 +22,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: ListView(
         children: [
-          SwitchListTile(
-            title: const Text("Dark Mode"),
-            value: isDarkMode,
-            onChanged: (value) {
-              setState(() => isDarkMode = value);
-              // TODO: Apply dark theme globally
-            },
+          ListTile(
+            title: const Text("Theme"),
+            subtitle: const Text("Choose app theme"),
+            trailing: DropdownButton<ThemeMode>(
+              value: themeNotifier.value,
+              items: const [
+                DropdownMenuItem(
+                  value: ThemeMode.system,
+                  child: Text("System"),
+                ),
+                DropdownMenuItem(
+                  value: ThemeMode.light,
+                  child: Text("Light"),
+                ),
+                DropdownMenuItem(
+                  value: ThemeMode.dark,
+                  child: Text("Dark"),
+                ),
+              ],
+              onChanged: (mode) {
+                if (mode != null) {
+                  setState(() => themeNotifier.value = mode);
+                }
+              },
+            ),
           ),
           ListTile(
             title: const Text("Font Size"),

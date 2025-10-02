@@ -49,23 +49,25 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+         backgroundColor: Colors.deepPurple,
+        title: Text(
           "MindVault AI",
           style: TextStyle(
-            color: Colors.white,
+            color: theme.appBarTheme.foregroundColor ?? Colors.white,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.2,
           ),
         ),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: const Color.fromARGB(255, 127, 11, 153),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
+             icon: Icon(Icons.more_vert, color: theme.appBarTheme.foregroundColor ?? Colors.white),
             onSelected: (value) {
               if (value == 'settings') {
                 Navigator.pushNamed(context, '/settings');
@@ -96,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               "Welcome back!",
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF4A00E0),
+                color: theme.colorScheme.primary,
               ),
             ),
             const SizedBox(height: 8),
