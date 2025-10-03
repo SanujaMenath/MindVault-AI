@@ -3,7 +3,6 @@ import '../db/summary_db.dart';
 import '../main.dart';
 import 'package:local_auth/local_auth.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -120,8 +119,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               builder: (context, constraints) {
                 // Calculate card size based on available width
                 final availableWidth = constraints.maxWidth;
-                final cardSize = (availableWidth - 24) / 4; // 4 cards with 8px spacing between
-                
+                final cardSize =
+                    (availableWidth - 24) /
+                    4; // 4 cards with 8px spacing between
+
                 return Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -168,17 +169,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       icon: Icons.lock,
                       label: "Vault",
                       gradient: const LinearGradient(
-                        colors: [
-                          Color.fromARGB(255, 255, 136, 0),
-                          Color.fromARGB(255, 204, 85, 0),
-                        ],
+                        colors: [Color(0xFFFF8800), Color(0xFFCC5500)],
                       ),
                       onTap: () async {
                         final auth = LocalAuthentication();
                         final didAuthenticate = await auth.authenticate(
                           localizedReason:
                               'Please authenticate to access your Vault',
-                          options: const AuthenticationOptions(biometricOnly: true),
+                          options: const AuthenticationOptions(
+                            biometricOnly: true,
+                            stickyAuth:
+                                true, // 👈 keeps the session alive briefly
+                          ),
                         );
 
                         if (didAuthenticate && context.mounted) {
