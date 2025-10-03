@@ -9,6 +9,7 @@ import 'screens/login_screen.dart';
 import 'screens/upload_pdf_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/tasks_screen.dart';
+import 'screens/vault_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/profile_screen.dart';
 
@@ -82,6 +83,7 @@ class MyApp extends StatelessWidget {
             '/upload': (context) => const UploadPdfScreen(),
             '/notes': (context) => const NotesScreen(),
             '/tasks': (context) => const TasksScreen(),
+            '/vault': (context) => const VaultScreen(),
             '/profile': (context) => const ProfileScreen(),
             '/settings': (context) => const SettingsScreen(),
           },

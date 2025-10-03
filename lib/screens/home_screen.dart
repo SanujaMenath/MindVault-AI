@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../db/summary_db.dart';
 import '../main.dart';
+import 'package:local_auth/local_auth.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -54,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-         backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.deepPurple,
         title: Text(
           "MindVault AI",
           style: TextStyle(
@@ -67,7 +69,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         elevation: 0,
         actions: [
           PopupMenuButton<String>(
-             icon: Icon(Icons.more_vert, color: theme.appBarTheme.foregroundColor ?? Colors.white),
+            icon: Icon(
+              Icons.more_vert,
+              color: theme.appBarTheme.foregroundColor ?? Colors.white,
+            ),
             onSelected: (value) {
               if (value == 'settings') {
                 Navigator.pushNamed(context, '/settings');
@@ -110,44 +115,80 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ),
             const SizedBox(height: 24),
 
-            // Action buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _ActionCard(
-                  icon: Icons.upload_file,
-                  label: "Upload PDF",
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color.fromARGB(255, 152, 45, 245),
-                      Color(0xFF4A00E0),
-                    ],
-                  ),
-                  onTap: () => Navigator.pushNamed(context, '/upload'),
-                ),
-                _ActionCard(
-                  icon: Icons.notes,
-                  label: "My Notes",
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color.fromARGB(255, 197, 2, 227),
-                      Color.fromARGB(255, 101, 14, 101),
-                    ],
-                  ),
-                  onTap: () => Navigator.pushNamed(context, '/notes'),
-                ),
-                _ActionCard(
-                  icon: Icons.task, // task icon
-                  label: "Tasks",
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color.fromARGB(255, 47, 168, 193),
-                      Color.fromARGB(255, 27, 81, 126),
-                    ], // nice orange → dark
-                  ),
-                  onTap: () => Navigator.pushNamed(context, '/tasks'),
-                ),
-              ],
+            // Action buttons - Using GridView for responsive layout
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Calculate card size based on available width
+                final availableWidth = constraints.maxWidth;
+                final cardSize = (availableWidth - 24) / 4; // 4 cards with 8px spacing between
+                
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.spaceBetween,
+                  children: [
+                    _ActionCard(
+                      size: cardSize,
+                      icon: Icons.upload_file,
+                      label: "Upload PDF",
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color.fromARGB(255, 152, 45, 245),
+                          Color(0xFF4A00E0),
+                        ],
+                      ),
+                      onTap: () => Navigator.pushNamed(context, '/upload'),
+                    ),
+                    _ActionCard(
+                      size: cardSize,
+                      icon: Icons.notes,
+                      label: "My Notes",
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color.fromARGB(255, 197, 2, 227),
+                          Color.fromARGB(255, 101, 14, 101),
+                        ],
+                      ),
+                      onTap: () => Navigator.pushNamed(context, '/notes'),
+                    ),
+                    _ActionCard(
+                      size: cardSize,
+                      icon: Icons.task,
+                      label: "Tasks",
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color.fromARGB(255, 47, 168, 193),
+                          Color.fromARGB(255, 27, 81, 126),
+                        ],
+                      ),
+                      onTap: () => Navigator.pushNamed(context, '/tasks'),
+                    ),
+                    _ActionCard(
+                      size: cardSize,
+                      icon: Icons.lock,
+                      label: "Vault",
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color.fromARGB(255, 255, 136, 0),
+                          Color.fromARGB(255, 204, 85, 0),
+                        ],
+                      ),
+                      onTap: () async {
+                        final auth = LocalAuthentication();
+                        final didAuthenticate = await auth.authenticate(
+                          localizedReason:
+                              'Please authenticate to access your Vault',
+                          options: const AuthenticationOptions(biometricOnly: true),
+                        );
+
+                        if (didAuthenticate && context.mounted) {
+                          Navigator.pushNamed(context, '/vault');
+                        }
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
 
             const SizedBox(height: 32),
@@ -255,12 +296,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
 // Action Card widget
 class _ActionCard extends StatelessWidget {
+  final double size;
   final IconData icon;
   final String label;
   final LinearGradient gradient;
   final VoidCallback onTap;
 
   const _ActionCard({
+    required this.size,
     required this.icon,
     required this.label,
     required this.gradient,
@@ -272,8 +315,8 @@ class _ActionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 100,
-        height: 100,
+        width: size,
+        height: size,
         decoration: BoxDecoration(
           gradient: gradient,
           borderRadius: BorderRadius.circular(16),
@@ -288,15 +331,21 @@ class _ActionCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 32, color: Colors.white),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+            Icon(icon, size: size * 0.32, color: Colors.white),
+            SizedBox(height: size * 0.08),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: size * 0.13,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
