@@ -55,10 +55,59 @@ flutter run
 ``` 
 ---
 
-🔒 Security
+🔒 App Security
 
-- Biometric authentication (fingerprint/face)
+# 1. Local Data Protection
 
-- AES-256 data encryption for vault storage
+ - Store sensitive data in flutter_secure_storage (not SharedPreferences).
 
-- Secure API communication with HTTPS
+ - Encrypt files if saving locally (ex:- text, images).
+
+ - Protect sensitive screens with local_auth (biometric / PIN).
+
+ [//]: # (Block screenshots/recording with FlutterWindowManager.FLAG_SECURE.)
+
+ 
+# 2. API Security
+
+ - All API calls use HTTPS (TLS/SSL).
+
+ [//]: # (SSL Pinning enabled (e.g. ssl_pinning_plugin).)
+
+ - No API keys or secrets hardcoded in the app.
+
+ <!-- Use short-lived tokens (JWT / OAuth2) + refresh tokens. -->
+
+ - All authorization is verified on the server (not just the client).
+
+# 3. Authentication & Session
+
+ - Logout clears tokens and secure storage.
+ - Backend validates permissions.
+ <!-- Session timeout or token expiry is enforced. -->
+
+# 4. Code Security
+
+ - Flutter build uses --obfuscate --split-debug-info.  
+ - API keys/configs hidden (Remote Config / server-side).  
+ <!-- Android Proguard/R8 enabled. -->
+ - iOS builds hardened (Bitcode/Release mode).
+
+# 5. Runtime Security
+
+ <!-- Jailbreak/Root detection (with flutter_jailbreak_detection). -->
+ <!-- Handle offline cache carefully (no sensitive logs). -->
+ - Errors don’t expose sensitive info (stack traces hidden in production).  
+
+ # 6. Dependencies & Updates 
+
+ - All packages checked with flutter pub outdated.  
+ - Remove unused dependencies.  
+ - Use only trusted & maintained packages.  
+
+# 7. Testing & Validation
+
+ <!-- Run MobSF / APK Analyzer for static security checks. -->
+ <!-- Test API with Burp Suite / Charles Proxy to confirm SSL pinning. -->
+ - Do manual penetration testing (try modifying requests, bypassing auth).  
+ - Check logs (no sensitive info printed in debugPrint or console).  
