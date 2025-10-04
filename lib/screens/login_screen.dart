@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:mindvault_ai/services/task_service.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -10,8 +11,10 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final authService = AuthService();
+  final TaskService _taskService = TaskService();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -33,18 +36,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(fontSize: 15),
-              ),
+              child: Text(message, style: const TextStyle(fontSize: 15)),
             ),
           ],
         ),
         backgroundColor: isError ? Colors.red[700] : Colors.green[700],
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),
         duration: const Duration(seconds: 3),
       ),
@@ -54,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   Future<void> _handleSignIn() async {
     // Check connectivity first
     final hasConnection = await _checkConnectivity();
-    
+
     if (!hasConnection) {
       _showToast(
         "No internet connection. Please check your Wi-Fi or mobile data.",
@@ -69,15 +67,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
     try {
       final user = await authService.signInWithGoogle();
-      if (user != null && mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+      if (user != null) {
+        await _taskService.syncGuestTasksToUser();
+        
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
       }
     } catch (e) {
       if (mounted) {
-        _showToast(
-          "Sign in failed. Please try again.",
-          isError: true,
-        );
+        _showToast("Sign in failed. Please try again.", isError: true);
       }
     } finally {
       if (mounted) {
@@ -91,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   Future<void> _handleSignOut() async {
     // Check connectivity first
     final hasConnection = await _checkConnectivity();
-    
+
     if (!hasConnection) {
       _showToast(
         "No internet connection. Please check your Wi-Fi or mobile data.",
@@ -111,10 +110,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       }
     } catch (e) {
       if (mounted) {
-        _showToast(
-          "Sign out failed. Please try again.",
-          isError: true,
-        );
+        _showToast("Sign out failed. Please try again.", isError: true);
       }
     } finally {
       if (mounted) {
@@ -140,15 +136,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       ),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-      ),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+          ),
+        );
 
     _animationController.forward();
   }
@@ -290,25 +284,41 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
                                     width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                     decoration: BoxDecoration(
                                       gradient: _isLoading
                                           ? LinearGradient(
                                               colors: [
-                                                const Color.fromARGB(255, 152, 45, 245).withOpacity(0.6),
-                                                const Color(0xFF4A00E0).withOpacity(0.6),
+                                                const Color.fromARGB(
+                                                  255,
+                                                  152,
+                                                  45,
+                                                  245,
+                                                ).withOpacity(0.6),
+                                                const Color(
+                                                  0xFF4A00E0,
+                                                ).withOpacity(0.6),
                                               ],
                                             )
                                           : const LinearGradient(
                                               colors: [
-                                                Color.fromARGB(255, 152, 45, 245),
+                                                Color.fromARGB(
+                                                  255,
+                                                  152,
+                                                  45,
+                                                  245,
+                                                ),
                                                 Color(0xFF4A00E0),
                                               ],
                                             ),
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: const Color(0xFF4A00E0).withOpacity(0.4),
+                                          color: const Color(
+                                            0xFF4A00E0,
+                                          ).withOpacity(0.4),
                                           blurRadius: 12,
                                           offset: const Offset(0, 6),
                                         ),
@@ -321,30 +331,44 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                               width: 20,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Colors.white),
                                               ),
                                             ),
                                           )
                                         : Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
                                             children: [
                                               Container(
-                                                padding: const EdgeInsets.all(8),
+                                                padding: const EdgeInsets.all(
+                                                  8,
+                                                ),
                                                 decoration: BoxDecoration(
                                                   color: Colors.white,
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
                                                 ),
                                                 child: Image.network(
                                                   'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
                                                   height: 20,
                                                   width: 20,
-                                                  errorBuilder: (context, error, stackTrace) {
-                                                    return const Icon(
-                                                      Icons.login,
-                                                      size: 20,
-                                                      color: Color(0xFF4A00E0),
-                                                    );
-                                                  },
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) {
+                                                        return const Icon(
+                                                          Icons.login,
+                                                          size: 20,
+                                                          color: Color(
+                                                            0xFF4A00E0,
+                                                          ),
+                                                        );
+                                                      },
                                                 ),
                                               ),
                                               const SizedBox(width: 16),
@@ -365,9 +389,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             ] else ...[
                               CircleAvatar(
                                 radius: 40,
-                                backgroundColor: const Color(0xFF4A00E0).withOpacity(0.1),
+                                backgroundColor: const Color(
+                                  0xFF4A00E0,
+                                ).withOpacity(0.1),
                                 child: Text(
-                                  user.displayName?.substring(0, 1).toUpperCase() ?? 'U',
+                                  user.displayName
+                                          ?.substring(0, 1)
+                                          .toUpperCase() ??
+                                      'U',
                                   style: const TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
@@ -402,11 +431,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
                                     width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: _isLoading
-                                            ? const Color(0xFF4A00E0).withOpacity(0.4)
+                                            ? const Color(
+                                                0xFF4A00E0,
+                                              ).withOpacity(0.4)
                                             : const Color(0xFF4A00E0),
                                         width: 2,
                                       ),
@@ -419,12 +452,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                               width: 20,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A00E0)),
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Color(0xFF4A00E0)),
                                               ),
                                             ),
                                           )
                                         : const Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
                                             children: [
                                               Icon(
                                                 Icons.logout,
