@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/task_service.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -12,59 +13,62 @@ class TasksScreen extends StatefulWidget {
 class _TasksScreenState extends State<TasksScreen> {
   final TextEditingController _controller = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final TaskService _taskService = TaskService();
+
+  List<Map<String, dynamic>> _guestTasks = [];
 
   User? get currentUser => _auth.currentUser;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadGuestTasks();
+  }
+
+  Future<void> _loadGuestTasks() async {
+    if (currentUser == null) {
+      final tasks = await _taskService.getGuestTasks();
+      setState(() => _guestTasks = tasks);
+    }
+  }
+
   Future<void> _addTask() async {
     final text = _controller.text.trim();
-    if (text.isEmpty || currentUser == null) return;
-
-    await _firestore
-        .collection('users')
-        .doc(currentUser!.uid)
-        .collection('tasks')
-        .add({'title': text, 'timestamp': FieldValue.serverTimestamp()});
+    if (text.isEmpty) return;
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    await _taskService.addTask(id, text);
+    if (currentUser == null) {
+      await _loadGuestTasks(); // refresh guest list
+    }
 
     _controller.clear();
   }
 
-  Future<void> _deleteTask(String taskId) async {
-    if (currentUser == null) return;
-    await _firestore
-        .collection('users')
-        .doc(currentUser!.uid)
-        .collection('tasks')
-        .doc(taskId)
-        .delete();
+  Future<void> _deleteTask(String id) async {
+    await _taskService.deleteTask(id);
+    if (currentUser == null) {
+      await _loadGuestTasks(); // refresh guest list
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (currentUser == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please sign in to view your tasks')),
-      );
-    }
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
-          "Tasks",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
-        ),
+        title: const Text("Tasks"),
         centerTitle: true,
-        backgroundColor: const Color(0xFF4A00E0),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // Input row
             Row(
               children: [
                 Expanded(
@@ -73,14 +77,14 @@ class _TasksScreenState extends State<TasksScreen> {
                     decoration: InputDecoration(
                       hintText: "Enter a new task...",
                       filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
+                      fillColor: theme.cardColor,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                     ),
                   ),
@@ -89,62 +93,75 @@ class _TasksScreenState extends State<TasksScreen> {
                 ElevatedButton(
                   onPressed: _addTask,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A00E0),
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Icon(Icons.add, color: Colors.white),
+                  child: const Icon(Icons.add),
                 ),
               ],
             ),
             const SizedBox(height: 16),
+
+            // Task list
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _firestore
-                    .collection('users')
-                    .doc(currentUser!.uid)
-                    .collection('tasks')
-                    .orderBy('timestamp', descending: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  final docs = snapshot.data!.docs;
-
-                  if (docs.isEmpty) {
-                    return const Center(child: Text("No tasks yet"));
-                  }
-
-                  return ListView.builder(
-                    itemCount: docs.length,
-                    itemBuilder: (context, index) {
-                      final task = docs[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+              child: currentUser != null
+                  ? StreamBuilder<QuerySnapshot>(
+                      stream: _taskService.getUserTasks(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        final docs = snapshot.data!.docs;
+                        if (docs.isEmpty) {
+                          return const Center(child: Text("No tasks yet"));
+                        }
+                        return ListView.builder(
+                          itemCount: docs.length,
+                          itemBuilder: (context, index) {
+                            final task = docs[index];
+                            return _buildTaskTile(
+                              task['title'],
+                              task.id,
+                              colorScheme,
+                            );
+                          },
+                        );
+                      },
+                    )
+                  : _guestTasks.isEmpty
+                      ? const Center(child: Text("No tasks yet (guest mode)"))
+                      : ListView.builder(
+                          itemCount: _guestTasks.length,
+                          itemBuilder: (context, index) {
+                            final task = _guestTasks[index];
+                            return _buildTaskTile(
+                              task['title'],
+                              task['id'],
+                              colorScheme,
+                            );
+                          },
                         ),
-                        child: ListTile(
-                          leading: const Icon(
-                            Icons.check_circle_outline,
-                            color: Color(0xFF4A00E0),
-                          ),
-                          title: Text(task['title']),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteTask(task.id),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaskTile(String title, String id, ColorScheme colorScheme) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: Icon(Icons.check_circle_outline, color: colorScheme.primary),
+        title: Text(title),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: () => _deleteTask(id),
         ),
       ),
     );

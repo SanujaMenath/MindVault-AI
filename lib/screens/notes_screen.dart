@@ -6,7 +6,19 @@ class NotesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Notes")),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        title: const Text(
+          "Notes",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: const Center(child: Text("Notes Screen")),
     );
   }

@@ -23,9 +23,9 @@ It combines task scheduling, note management, AI-powered summarization, and a se
 
 - **Frontend:** Flutter (Dart)  
 - **Backend:** Spring Boot (Java)  
-- **Database:** MySQL + SQLite (offline storage)  
-- **AI Integration:** OpenAI API (for summarization)  
-- **Cloud Storage:** Google Drive / OneDrive APIs  
+- **Database:** MySQL + SQLite (offline storage) + Firebase <!--(online storage) -->
+- **AI Integration:** Hugging Face API (for summarization)  
+- **Cloud Storage:** Google Drive  
 - **Security:** AES Encryption + Biometrics (Android/iOS SDKs)  
 
 ---
@@ -59,26 +59,19 @@ flutter run
 
 # 1. Local Data Protection
 
- - Store sensitive data in flutter_secure_storage (not SharedPreferences).
-
- - Encrypt files if saving locally (ex:- text, images).
-
- - Protect sensitive screens with local_auth (biometric / PIN).
-
- [//]: # (Block screenshots/recording with FlutterWindowManager.FLAG_SECURE.)
+ - Store sensitive data in flutter_secure_storage (not SharedPreferences).  
+ - Encrypt files if saving locally (ex:- text, images).  
+ - Protect sensitive screens with local_auth (biometric / PIN).  
+ <!-- Block screenshots/recording with FlutterWindowManager.FLAG_SECURE. -->
 
  
 # 2. API Security
 
- - All API calls use HTTPS (TLS/SSL).
-
- [//]: # (SSL Pinning enabled (e.g. ssl_pinning_plugin).)
-
- - No API keys or secrets hardcoded in the app.
-
+ - All API calls use HTTPS (TLS/SSL).  
+ <!-- SSL Pinning enabled (e.g. ssl_pinning_plugin). -->
+ - No API keys or secrets hardcoded in the app.  
  <!-- Use short-lived tokens (JWT / OAuth2) + refresh tokens. -->
-
- - All authorization is verified on the server (not just the client).
+ - All authorization is verified on the server (not just the client).  
 
 # 3. Authentication & Session
 
@@ -88,7 +81,7 @@ flutter run
 
 # 4. Code Security
 
- - Flutter build uses --obfuscate --split-debug-info.  
+ - Flutter build uses --obfuscate --split-debug-info.   
  - API keys/configs hidden (Remote Config / server-side).  
  <!-- Android Proguard/R8 enabled. -->
  - iOS builds hardened (Bitcode/Release mode).
