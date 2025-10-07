@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+// lib/screens/tasks_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import '../services/task_service.dart';
+import 'task_detail_screen.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -11,158 +13,200 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
+  final TaskService _service = TaskService();
   final TextEditingController _controller = TextEditingController();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final TaskService _taskService = TaskService();
-
   List<Map<String, dynamic>> _guestTasks = [];
-
-  User? get currentUser => _auth.currentUser;
+  User? _user;
+  bool _loadingGuest = true;
 
   @override
   void initState() {
     super.initState();
-    _loadGuestTasks();
+    _user = FirebaseAuth.instance.currentUser;
+    if (_user == null) _loadGuest();
+    // listen auth changes to refresh UI / optionally sync
+    FirebaseAuth.instance.authStateChanges().listen((u) async {
+      setState(() => _user = u);
+      if (u != null) {
+        // sync any guest data automatically
+        await _service.syncGuestTasksToUser();
+        setState(() {}); // refresh to use streams
+      } else {
+        await _loadGuest();
+      }
+    });
   }
 
-  Future<void> _loadGuestTasks() async {
-    if (currentUser == null) {
-      final tasks = await _taskService.getGuestTasks();
-      setState(() => _guestTasks = tasks);
-    }
+  Future<void> _loadGuest() async {
+    setState(() => _loadingGuest = true);
+    _guestTasks = await _service.getGuestTasksWithSubtasks();
+    setState(() => _loadingGuest = false);
   }
 
   Future<void> _addTask() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
-    await _taskService.addTask(id, text);
-    if (currentUser == null) {
-      await _loadGuestTasks(); // refresh guest list
-    }
-
     _controller.clear();
+    if (_user == null) {
+      await _service.addGuestTask(text);
+      await _loadGuest();
+    } else {
+      await _service.addUserTask(text);
+    }
   }
 
   Future<void> _deleteTask(String id) async {
-    await _taskService.deleteTask(id);
-    if (currentUser == null) {
-      await _loadGuestTasks(); // refresh guest list
+    if (_user == null) {
+      await _service.deleteGuestTask(id);
+      await _loadGuest();
+    } else {
+      await _service.deleteUserTask(id);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  Future<void> _toggleTask(String id, bool currentDone) async {
+    if (_user == null) {
+      await _service.toggleGuestTaskDone(id, !currentDone);
+      await _loadGuest();
+    } else {
+      await _service.toggleUserTaskDone(id, !currentDone);
+    }
+  }
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text("Tasks"),
-        centerTitle: true,
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Input row
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      hintText: "Enter a new task...",
-                      filled: true,
-                      fillColor: theme.cardColor,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _addTask,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Icon(Icons.add),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+  Widget _animatedCheck(bool done) {
+    // animated icon for tick/untick
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: FadeTransition(opacity: anim, child: child)),
+      child: done
+          ? Icon(Icons.check_box, key: const ValueKey('checked'), color: Colors.deepPurple)
+          : Icon(Icons.check_box_outline_blank, key: const ValueKey('unchecked'), color: Colors.grey),
+    );
+  }
 
-            // Task list
-            Expanded(
-              child: currentUser != null
-                  ? StreamBuilder<QuerySnapshot>(
-                      stream: _taskService.getUserTasks(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        }
-                        final docs = snapshot.data!.docs;
-                        if (docs.isEmpty) {
-                          return const Center(child: Text("No tasks yet"));
-                        }
-                        return ListView.builder(
-                          itemCount: docs.length,
-                          itemBuilder: (context, index) {
-                            final task = docs[index];
-                            return _buildTaskTile(
-                              task['title'],
-                              task.id,
-                              colorScheme,
-                            );
-                          },
-                        );
-                      },
-                    )
-                  : _guestTasks.isEmpty
-                      ? const Center(child: Text("No tasks yet (guest mode)"))
-                      : ListView.builder(
-                          itemCount: _guestTasks.length,
-                          itemBuilder: (context, index) {
-                            final task = _guestTasks[index];
-                            return _buildTaskTile(
-                              task['title'],
-                              task['id'],
-                              colorScheme,
-                            );
-                          },
-                        ),
+  Widget _buildLocalCard(Map<String, dynamic> task) {
+    final done = task['done'] as bool;
+    final subs = task['subtasks'] as List<dynamic>;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TaskDetailScreen(
+                parentId: task['id'],
+                title: task['title'],
+                isGuest: true,
+                onChanged: _loadGuest,
+              ),
             ),
-          ],
+          );
+          await _loadGuest();
+        },
+        leading: InkWell(
+          onTap: () => _toggleTask(task['id'], done),
+          child: _animatedCheck(done),
+        ),
+        title: Text(task['title'], style: TextStyle(decoration: done ? TextDecoration.lineThrough : null)),
+        subtitle: Text('${subs.length} subtasks'),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: () => _deleteTask(task['id']),
         ),
       ),
     );
   }
 
-  Widget _buildTaskTile(String title, String id, ColorScheme colorScheme) {
+  Widget _buildRemoteCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    final done = (data['done'] ?? false) as bool;
+    final title = data['title'] ?? '';
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: Icon(Icons.check_circle_outline, color: colorScheme.primary),
-        title: Text(title),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: () => _deleteTask(id),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TaskDetailScreen(
+                parentId: doc.id,
+                title: title,
+                isGuest: false,
+                onChanged: () {},
+              ),
+            ),
+          );
+        },
+        leading: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: _service.getUserSubtasksStream(doc.id),
+          builder: (context, snap) {
+            final subs = snap.hasData ? snap.data!.docs : [];
+            return InkWell(
+              onTap: () => _toggleTask(doc.id, done),
+              child: _animatedCheck(done),
+            );
+          },
         ),
+        title: Text(title, style: TextStyle(decoration: done ? TextDecoration.lineThrough : null)),
+        trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _deleteTask(doc.id)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(backgroundColor: Colors.deepPurple, title: const Text('Tasks'), centerTitle: true),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(children: [
+          Row(children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                decoration: InputDecoration(
+                  hintText: 'Add a main task...',
+                  filled: true,
+                  fillColor: theme.cardColor,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                onSubmitted: (_) => _addTask(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: _addTask,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              child: const Icon(Icons.add),
+            )
+          ]),
+          const SizedBox(height: 16),
+          Expanded(
+            child: _user != null
+                ? StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: _service.getUserTasksStream(),
+                    builder: (context, snap) {
+                      if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                      final docs = snap.data?.docs ?? [];
+                      if (docs.isEmpty) return const Center(child: Text('No tasks yet'));
+                      return ListView.builder(itemCount: docs.length, itemBuilder: (ctx, i) => _buildRemoteCard(docs[i]));
+                    },
+                  )
+                : _loadingGuest
+                    ? const Center(child: CircularProgressIndicator())
+                    : _guestTasks.isEmpty
+                        ? const Center(child: Text('No tasks yet (guest)'))
+                        : RefreshIndicator(
+                            onRefresh: _loadGuest,
+                            child: ListView.builder(itemCount: _guestTasks.length, itemBuilder: (ctx, i) => _buildLocalCard(_guestTasks[i])),
+                          ),
+          )
+        ]),
       ),
     );
   }
