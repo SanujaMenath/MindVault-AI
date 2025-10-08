@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'services/notification_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 import 'firebase_options.dart';
@@ -10,6 +11,7 @@ import 'screens/upload_pdf_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/tasks_screen.dart';
 import 'screens/vault_screen.dart';
+import 'screens/reminder_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/profile_screen.dart';
 
@@ -22,6 +24,7 @@ final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  await NotificationService.instance.initialize();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -84,6 +87,7 @@ class MyApp extends StatelessWidget {
             '/notes': (context) => const NotesScreen(),
             '/tasks': (context) => const TasksScreen(),
             '/vault': (context) => const VaultScreen(),
+            '/reminders': (context) => const RemindersScreen(),
             '/profile': (context) => const ProfileScreen(),
             '/settings': (context) => const SettingsScreen(),
           },

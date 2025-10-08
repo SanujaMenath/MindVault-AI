@@ -114,79 +114,100 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ),
             const SizedBox(height: 24),
 
-            // Action buttons - Using GridView for responsive layout
+            // Action buttons - 2 rows with 3 cards each
             LayoutBuilder(
               builder: (context, constraints) {
-                // Calculate card size based on available width
+                // Calculate card size for 3 cards per row
                 final availableWidth = constraints.maxWidth;
-                final cardSize =
-                    (availableWidth - 24) /
-                    4; // 4 cards with 8px spacing between
+                final cardSize = (availableWidth - 16) / 3; // 3 cards with 8px spacing
 
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.spaceBetween,
+                return Column(
                   children: [
-                    _ActionCard(
-                      size: cardSize,
-                      icon: Icons.upload_file,
-                      label: "Upload PDF",
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color.fromARGB(255, 152, 45, 245),
-                          Color(0xFF4A00E0),
-                        ],
-                      ),
-                      onTap: () => Navigator.pushNamed(context, '/upload'),
-                    ),
-                    _ActionCard(
-                      size: cardSize,
-                      icon: Icons.notes,
-                      label: "My Notes",
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color.fromARGB(255, 197, 2, 227),
-                          Color.fromARGB(255, 101, 14, 101),
-                        ],
-                      ),
-                      onTap: () => Navigator.pushNamed(context, '/notes'),
-                    ),
-                    _ActionCard(
-                      size: cardSize,
-                      icon: Icons.task,
-                      label: "Tasks",
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color.fromARGB(255, 47, 168, 193),
-                          Color.fromARGB(255, 27, 81, 126),
-                        ],
-                      ),
-                      onTap: () => Navigator.pushNamed(context, '/tasks'),
-                    ),
-                    _ActionCard(
-                      size: cardSize,
-                      icon: Icons.lock,
-                      label: "Vault",
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF8800), Color(0xFFCC5500)],
-                      ),
-                      onTap: () async {
-                        final auth = LocalAuthentication();
-                        final didAuthenticate = await auth.authenticate(
-                          localizedReason:
-                              'Please authenticate to access your Vault',
-                          options: const AuthenticationOptions(
-                            biometricOnly: true,
-                            stickyAuth:
-                                true, // 👈 keeps the session alive briefly
+                    // First Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _ActionCard(
+                          size: cardSize,
+                          icon: Icons.upload_file,
+                          label: "Upload PDF",
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color.fromARGB(255, 152, 45, 245),
+                              Color(0xFF4A00E0),
+                            ],
                           ),
-                        );
+                          onTap: () => Navigator.pushNamed(context, '/upload'),
+                        ),
+                        _ActionCard(
+                          size: cardSize,
+                          icon: Icons.notes,
+                          label: "My Notes",
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color.fromARGB(255, 197, 2, 227),
+                              Color.fromARGB(255, 101, 14, 101),
+                            ],
+                          ),
+                          onTap: () => Navigator.pushNamed(context, '/notes'),
+                        ),
+                        _ActionCard(
+                          size: cardSize,
+                          icon: Icons.task,
+                          label: "Tasks",
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color.fromARGB(255, 47, 168, 193),
+                              Color.fromARGB(255, 27, 81, 126),
+                            ],
+                          ),
+                          onTap: () => Navigator.pushNamed(context, '/tasks'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Second Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _ActionCard(
+                          size: cardSize,
+                          icon: Icons.lock,
+                          label: "Vault",
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFF8800), Color(0xFFCC5500)],
+                          ),
+                          onTap: () async {
+                            final auth = LocalAuthentication();
+                            final didAuthenticate = await auth.authenticate(
+                              localizedReason:
+                                  'Please authenticate to access your Vault',
+                              options: const AuthenticationOptions(
+                                biometricOnly: true,
+                                stickyAuth: true,
+                              ),
+                            );
 
-                        if (didAuthenticate && context.mounted) {
-                          Navigator.pushNamed(context, '/vault');
-                        }
-                      },
+                            if (didAuthenticate && context.mounted) {
+                              Navigator.pushNamed(context, '/vault');
+                            }
+                          },
+                        ),
+                        _ActionCard(
+                          size: cardSize,
+                          icon: Icons.notifications_active,
+                          label: "Reminders",
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color.fromARGB(255, 255, 107, 129),
+                              Color.fromARGB(255, 255, 64, 129),
+                            ],
+                          ),
+                          onTap: () => Navigator.pushNamed(context, '/reminders'),
+                        ),
+                        // Empty space for symmetry (or add another card if needed)
+                        SizedBox(width: cardSize),
+                      ],
                     ),
                   ],
                 );

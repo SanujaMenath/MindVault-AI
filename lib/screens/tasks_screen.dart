@@ -77,10 +77,21 @@ class _TasksScreenState extends State<TasksScreen> {
     // animated icon for tick/untick
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
-      transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: FadeTransition(opacity: anim, child: child)),
+      transitionBuilder: (child, anim) => ScaleTransition(
+        scale: anim,
+        child: FadeTransition(opacity: anim, child: child),
+      ),
       child: done
-          ? Icon(Icons.check_box, key: const ValueKey('checked'), color: Colors.deepPurple)
-          : Icon(Icons.check_box_outline_blank, key: const ValueKey('unchecked'), color: Colors.grey),
+          ? Icon(
+              Icons.check_box,
+              key: const ValueKey('checked'),
+              color: Colors.deepPurple,
+            )
+          : Icon(
+              Icons.check_box_outline_blank,
+              key: const ValueKey('unchecked'),
+              color: Colors.grey,
+            ),
     );
   }
 
@@ -109,7 +120,12 @@ class _TasksScreenState extends State<TasksScreen> {
           onTap: () => _toggleTask(task['id'], done),
           child: _animatedCheck(done),
         ),
-        title: Text(task['title'], style: TextStyle(decoration: done ? TextDecoration.lineThrough : null)),
+        title: Text(
+          task['title'],
+          style: TextStyle(
+            decoration: done ? TextDecoration.lineThrough : null,
+          ),
+        ),
         subtitle: Text('${subs.length} subtasks'),
         trailing: IconButton(
           icon: const Icon(Icons.delete, color: Colors.red),
@@ -146,12 +162,26 @@ class _TasksScreenState extends State<TasksScreen> {
             final subs = snap.hasData ? snap.data!.docs : [];
             return InkWell(
               onTap: () => _toggleTask(doc.id, done),
-              child: _animatedCheck(done),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _animatedCheck(done),
+                  Text('${subs.length}', style: const TextStyle(fontSize: 10)),
+                ],
+              ),
             );
           },
         ),
-        title: Text(title, style: TextStyle(decoration: done ? TextDecoration.lineThrough : null)),
-        trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _deleteTask(doc.id)),
+        title: Text(
+          title,
+          style: TextStyle(
+            decoration: done ? TextDecoration.lineThrough : null,
+          ),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: () => _deleteTask(doc.id),
+        ),
       ),
     );
   }
@@ -160,53 +190,88 @@ class _TasksScreenState extends State<TasksScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.deepPurple, title: const Text('Tasks'), centerTitle: true),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
+        title: const Text('Tasks'),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(children: [
-          Row(children: [
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  hintText: 'Add a main task...',
-                  filled: true,
-                  fillColor: theme.cardColor,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: 'Add a main task...',
+                      filled: true,
+                      fillColor: theme.cardColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                    onSubmitted: (_) => _addTask(),
+                  ),
                 ),
-                onSubmitted: (_) => _addTask(),
-              ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _addTask,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Icon(Icons.add),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: _addTask,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: const Icon(Icons.add),
-            )
-          ]),
-          const SizedBox(height: 16),
-          Expanded(
-            child: _user != null
-                ? StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                    stream: _service.getUserTasksStream(),
-                    builder: (context, snap) {
-                      if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-                      final docs = snap.data?.docs ?? [];
-                      if (docs.isEmpty) return const Center(child: Text('No tasks yet'));
-                      return ListView.builder(itemCount: docs.length, itemBuilder: (ctx, i) => _buildRemoteCard(docs[i]));
-                    },
-                  )
-                : _loadingGuest
-                    ? const Center(child: CircularProgressIndicator())
-                    : _guestTasks.isEmpty
-                        ? const Center(child: Text('No tasks yet (guest)'))
-                        : RefreshIndicator(
-                            onRefresh: _loadGuest,
-                            child: ListView.builder(itemCount: _guestTasks.length, itemBuilder: (ctx, i) => _buildLocalCard(_guestTasks[i])),
-                          ),
-          )
-        ]),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _user != null
+                  ? StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: _service.getUserTasksStream(),
+                      builder: (context, snap) {
+                        if (snap.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        final docs = snap.data?.docs ?? [];
+
+                        if (docs.isEmpty) {
+                          return const Center(child: Text('No tasks yet'));
+                        }
+
+                        return ListView.builder(
+                          itemCount: docs.length,
+                          itemBuilder: (ctx, i) => _buildRemoteCard(docs[i]),
+                        );
+                      },
+                    )
+                  : _loadingGuest
+                  ? const Center(child: CircularProgressIndicator())
+                  : _guestTasks.isEmpty
+                  ? const Center(child: Text('No tasks yet (guest)'))
+                  : RefreshIndicator(
+                      onRefresh: _loadGuest,
+                      child: ListView.builder(
+                        itemCount: _guestTasks.length,
+                        itemBuilder: (ctx, i) =>
+                            _buildLocalCard(_guestTasks[i]),
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
