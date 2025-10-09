@@ -117,20 +117,24 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
+    final surfaceColor = theme.colorScheme.surface;
+    final cardColor = theme.cardColor;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.deepPurple,
-        title: const Text(
+        title: Text(
           'Reminders',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -139,10 +143,12 @@ class _RemindersScreenState extends State<RemindersScreen> {
           // Calendar
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: surfaceColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: isDark
+                      ? Colors.black.withOpacity(0.3)
+                      : Colors.black.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -169,6 +175,13 @@ class _RemindersScreenState extends State<RemindersScreen> {
               },
               eventLoader: _getRemindersForDay,
               calendarStyle: CalendarStyle(
+                defaultTextStyle: TextStyle(color: theme.colorScheme.onSurface),
+                weekendTextStyle: TextStyle(
+                  color: isDark ? Colors.redAccent.shade100 : Colors.red,
+                ),
+                outsideTextStyle: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.3),
+                ),
                 todayDecoration: BoxDecoration(
                   color: primaryColor.withOpacity(0.5),
                   shape: BoxShape.circle,
@@ -177,18 +190,54 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   color: primaryColor,
                   shape: BoxShape.circle,
                 ),
-                markerDecoration: const BoxDecoration(
-                  color: Colors.pinkAccent,
+                markerDecoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.pinkAccent.shade100
+                      : Colors.pinkAccent,
                   shape: BoxShape.circle,
                 ),
-                weekendTextStyle: const TextStyle(color: Colors.red),
+                todayTextStyle: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+                selectedTextStyle: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              headerStyle: const HeaderStyle(
+              headerStyle: HeaderStyle(
                 formatButtonVisible: true,
                 titleCentered: true,
                 formatButtonShowsNext: false,
                 titleTextStyle: TextStyle(
                   fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+                formatButtonTextStyle: TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+                formatButtonDecoration: BoxDecoration(
+                  border: Border.all(color: primaryColor),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                leftChevronIcon: Icon(
+                  Icons.chevron_left,
+                  color: theme.colorScheme.onSurface,
+                ),
+                rightChevronIcon: Icon(
+                  Icons.chevron_right,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              daysOfWeekStyle: DaysOfWeekStyle(
+                weekdayStyle: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  fontWeight: FontWeight.bold,
+                ),
+                weekendStyle: TextStyle(
+                  color: isDark ? Colors.redAccent.shade100 : Colors.red,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -202,16 +251,19 @@ class _RemindersScreenState extends State<RemindersScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Reminders for ${DateFormat('MMM dd, yyyy').format(_selectedDay)}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    'Reminders for ${DateFormat('MMM dd, yyyy').format(_selectedDay)}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 Text(
                   '${_selectedDayReminders.length} items',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
                 ),
               ],
             ),
@@ -221,7 +273,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator(color: primaryColor))
                 : _selectedDayReminders.isEmpty
                 ? Center(
                     child: Column(
@@ -230,14 +282,13 @@ class _RemindersScreenState extends State<RemindersScreen> {
                         Icon(
                           Icons.event_available,
                           size: 80,
-                          color: Colors.grey[300],
+                          color: theme.colorScheme.onSurface.withOpacity(0.3),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No reminders for this day',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[500],
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
                           ),
                         ),
                       ],
@@ -257,10 +308,17 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
+                        color: cardColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: theme.colorScheme.outline.withOpacity(0.2),
+                          ),
                         ),
-                        elevation: 2,
+                        elevation: isDark ? 4 : 2,
+                        shadowColor: isDark
+                            ? Colors.black.withOpacity(0.5)
+                            : Colors.black.withOpacity(0.1),
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -277,7 +335,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                                 border: Border.all(
                                   color: isCompleted
                                       ? Colors.green
-                                      : Colors.grey,
+                                      : theme.colorScheme.outline,
                                   width: 2,
                                 ),
                                 color: isCompleted
@@ -295,16 +353,18 @@ class _RemindersScreenState extends State<RemindersScreen> {
                           ),
                           title: Text(
                             reminder['title'],
-                            style: TextStyle(
+                            style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               decoration: isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
                               color: isCompleted
-                                  ? Colors.grey
+                                  ? theme.colorScheme.onSurface.withOpacity(0.5)
                                   : (isExpired
-                                        ? Colors.redAccent
-                                        : Colors.black),
+                                        ? (isDark
+                                              ? Colors.redAccent.shade100
+                                              : Colors.redAccent)
+                                        : theme.colorScheme.onSurface),
                             ),
                           ),
                           subtitle: Column(
@@ -316,27 +376,26 @@ class _RemindersScreenState extends State<RemindersScreen> {
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Text(
                                     reminder['description'],
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey[600],
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.6),
                                     ),
                                   ),
                                 ),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.access_time,
                                     size: 14,
-                                    color: Colors.deepPurple,
+                                    color: primaryColor,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     DateFormat('hh:mm a').format(dateTime),
-                                    style: const TextStyle(
-                                      fontSize: 12,
+                                    style: theme.textTheme.bodySmall?.copyWith(
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.deepPurple,
+                                      color: primaryColor,
                                     ),
                                   ),
                                 ],
@@ -344,9 +403,11 @@ class _RemindersScreenState extends State<RemindersScreen> {
                             ],
                           ),
                           trailing: IconButton(
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.delete,
-                              color: Colors.redAccent,
+                              color: isDark
+                                  ? Colors.redAccent.shade100
+                                  : Colors.redAccent,
                             ),
                             onPressed: () => _deleteReminder(
                               reminder['id'],
@@ -362,18 +423,19 @@ class _RemindersScreenState extends State<RemindersScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addReminder,
-        backgroundColor: primaryColor,
-        icon: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
         label: const Text(
           'Add Reminder',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
 }
 
-// ==================== Add Reminder Dialog ====================
+//  Add Reminder Dialog
 class _AddReminderDialog extends StatefulWidget {
   final DateTime selectedDate;
   const _AddReminderDialog({required this.selectedDate});
@@ -393,6 +455,13 @@ class _AddReminderDialogState extends State<_AddReminderDialog> {
     _selectedTime = TimeOfDay.now();
   }
 
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickTime() async {
     final picked = await showTimePicker(
       context: context,
@@ -403,46 +472,93 @@ class _AddReminderDialogState extends State<_AddReminderDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+
     return AlertDialog(
-      title: const Text('New Reminder'),
+      backgroundColor: theme.dialogBackgroundColor,
+      title: Text(
+        'New Reminder',
+        style: TextStyle(color: theme.colorScheme.onSurface),
+      ),
       content: SingleChildScrollView(
         child: Column(
           children: [
             TextField(
               controller: _titleController,
-              decoration: const InputDecoration(
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              decoration: InputDecoration(
                 labelText: 'Title',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.title),
+                labelStyle: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.outline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.outline.withOpacity(0.5),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: primaryColor, width: 2),
+                ),
+                prefixIcon: Icon(Icons.title, color: primaryColor),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              decoration: InputDecoration(
                 labelText: 'Description (Optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.description),
+                labelStyle: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.outline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.outline.withOpacity(0.5),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: primaryColor, width: 2),
+                ),
+                prefixIcon: Icon(Icons.description, color: primaryColor),
               ),
               maxLines: 3,
             ),
             const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.access_time, color: Colors.deepPurple),
-              title: const Text('Time'),
-              subtitle: Text(
-                _selectedTime.format(context),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.5),
                 ),
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: _pickTime,
-              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Colors.grey[300]!),
+              ),
+              child: ListTile(
+                leading: Icon(Icons.access_time, color: primaryColor),
+                title: Text(
+                  'Time',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+                subtitle: Text(
+                  _selectedTime.format(context),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
+                trailing: Icon(
+                  Icons.chevron_right,
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                ),
+                onTap: _pickTime,
               ),
             ),
           ],
@@ -451,13 +567,21 @@ class _AddReminderDialogState extends State<_AddReminderDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(
+            'Cancel',
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
         ),
         ElevatedButton(
           onPressed: () {
             if (_titleController.text.trim().isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Please enter a title')),
+                SnackBar(
+                  content: const Text('Please enter a title'),
+                  backgroundColor: theme.colorScheme.error,
+                ),
               );
               return;
             }
@@ -477,8 +601,8 @@ class _AddReminderDialogState extends State<_AddReminderDialog> {
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
+            backgroundColor: primaryColor,
+            foregroundColor: theme.colorScheme.onPrimary,
           ),
           child: const Text('Save'),
         ),
