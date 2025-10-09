@@ -51,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -94,127 +95,181 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       ),
 
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Welcome back!",
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
+            // Greeting Section
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [
+                          theme.colorScheme.primary.withOpacity(0.3),
+                          theme.colorScheme.secondary.withOpacity(0.2),
+                        ]
+                      : [
+                          theme.colorScheme.primary.withOpacity(0.1),
+                          theme.colorScheme.secondary.withOpacity(0.05),
+                        ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.waving_hand,
+                        color: theme.colorScheme.primary,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Hello there!",
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Your intelligent workspace for notes, documents, and smart summaries.",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              "Organize your notes, PDFs, and AI summaries all in one place.",
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
+            Row(
+              children: [
+                Icon(
+                  Icons.dashboard_customize,
+                  size: 22,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "Quick Actions",
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
             // Action buttons - 2 rows with 3 cards each
-            LayoutBuilder(
-              builder: (context, constraints) {
-                // Calculate card size for 3 cards per row
-                final availableWidth = constraints.maxWidth;
-                final cardSize = (availableWidth - 16) / 3; // 3 cards with 8px spacing
-
-                return Column(
-                  children: [
-                    // First Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _ActionCard(
-                          size: cardSize,
-                          icon: Icons.upload_file,
-                          label: "Upload PDF",
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color.fromARGB(255, 152, 45, 245),
-                              Color(0xFF4A00E0),
-                            ],
-                          ),
-                          onTap: () => Navigator.pushNamed(context, '/upload'),
-                        ),
-                        _ActionCard(
-                          size: cardSize,
-                          icon: Icons.notes,
-                          label: "My Notes",
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color.fromARGB(255, 197, 2, 227),
-                              Color.fromARGB(255, 101, 14, 101),
-                            ],
-                          ),
-                          onTap: () => Navigator.pushNamed(context, '/notes'),
-                        ),
-                        _ActionCard(
-                          size: cardSize,
-                          icon: Icons.task,
-                          label: "Tasks",
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color.fromARGB(255, 47, 168, 193),
-                              Color.fromARGB(255, 27, 81, 126),
-                            ],
-                          ),
-                          onTap: () => Navigator.pushNamed(context, '/tasks'),
-                        ),
+             // Action Cards Grid
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.95,
+                children: [
+                  _ActionCard(
+                    size: 100,
+                    icon: Icons.upload_file,
+                    label: "Upload\nPDF",
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF982DF5),
+                        const Color(0xFF4A00E0),
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    const SizedBox(height: 8),
-                    // Second Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _ActionCard(
-                          size: cardSize,
-                          icon: Icons.lock,
-                          label: "Vault",
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFF8800), Color(0xFFCC5500)],
-                          ),
-                          onTap: () async {
-                            final auth = LocalAuthentication();
-                            final didAuthenticate = await auth.authenticate(
-                              localizedReason:
-                                  'Please authenticate to access your Vault',
-                              options: const AuthenticationOptions(
-                                biometricOnly: true,
-                                stickyAuth: true,
-                              ),
-                            );
-
-                            if (didAuthenticate && context.mounted) {
-                              Navigator.pushNamed(context, '/vault');
-                            }
-                          },
-                        ),
-                        _ActionCard(
-                          size: cardSize,
-                          icon: Icons.notifications_active,
-                          label: "Reminders",
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color.fromARGB(255, 255, 107, 129),
-                              Color.fromARGB(255, 255, 64, 129),
-                            ],
-                          ),
-                          onTap: () => Navigator.pushNamed(context, '/reminders'),
-                        ),
-                        // Empty space for symmetry (or add another card if needed)
-                        SizedBox(width: cardSize),
+                    onTap: () => Navigator.pushNamed(context, '/upload'),
+                  ),
+                  _ActionCard(
+                    size: 100,
+                    icon: Icons.notes,
+                    label: "My\nNotes",
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFC502E3),
+                        const Color(0xFF650E65),
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ],
-                );
-              },
-            ),
+                    onTap: () => Navigator.pushNamed(context, '/notes'),
+                  ),
+                  _ActionCard(
+                    size: 100,
+                    icon: Icons.task,
+                    label: "Tasks",
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF2FA8C1),
+                        const Color(0xFF1B517E),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    onTap: () => Navigator.pushNamed(context, '/tasks'),
+                  ),
+                  _ActionCard(
+                    size: 100,
+                    icon: Icons.lock,
+                    label: "Vault",
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFFF8800),
+                        const Color(0xFFCC5500),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    onTap: () async {
+                      final auth = LocalAuthentication();
+                      final didAuthenticate = await auth.authenticate(
+                        localizedReason:
+                            'Please authenticate to access your Vault',
+                        options: const AuthenticationOptions(
+                          biometricOnly: true,
+                          stickyAuth: true,
+                        ),
+                      );
+
+                      if (didAuthenticate && context.mounted) {
+                        Navigator.pushNamed(context, '/vault');
+                      }
+                    },
+                  ),
+                  _ActionCard(
+                    size: 100,
+                    icon: Icons.notifications_active,
+                    label: "Reminders",
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFFF6B81),
+                        const Color(0xFFFF4081),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    onTap: () => Navigator.pushNamed(context, '/reminders'),
+                  ),
+                ],
+              ),
 
             const SizedBox(height: 32),
+
+            // Recent Summaries Header
             Text(
               "Recent Summaries",
               style: Theme.of(
